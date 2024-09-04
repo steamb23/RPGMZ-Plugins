@@ -9,7 +9,8 @@
  */
 
 (()=>{
-    'use strict';
+    "use stirct";
+
     class Game_MapEx extends Game_Map {
         /**
          * 맵 이름을 가져옵니다.

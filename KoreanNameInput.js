@@ -10,7 +10,7 @@
  * @help KoreanNameInput.js
  * 
  * 이 플러그인은 RPG Maker MZ 기본 입력기 구현을 확장하여
- * 한글 조합에 의한 한글 입력 기능을 제공합니다.
+ * 한글 조합에 의한 두벌식 한글 입력 기능을 제공합니다.
  * 
  * 입력 배열 타입은 현재 두가지가 제공되고 있습니다.
  * - HANGUL1: 조합 가능한 모든 자모음을 배열합니다.
@@ -36,11 +36,14 @@
  * @off 일반 입력
  */
 
-(()=>{
-    "use strict";
-    const $params = PluginManager.parameters("KoreanNameInput");
-    const $inputTableType = String($params["inputTableType"]);
-    const $shortVowelInput = Boolean($params["shortVowelInput"]);
+(() => {
+    "use stirct";
+
+    const pluginName = "KoreanNameInput";
+
+    const params = PluginManager.parameters(pluginName);
+    const inputTableType = String(params["inputTableType"]);
+    const shortVowelInput = Boolean(params["shortVowelInput"]);
     
     /**
      * 한글 입력 조합 클래스
@@ -405,7 +408,7 @@
 
         table() {
             if ($gameSystem.isKorean()) {
-                switch ($inputTableType) {
+                switch (inputTableType) {
                     default: 
                         return [
                             Window_NameInputEx.HANGUL1,
