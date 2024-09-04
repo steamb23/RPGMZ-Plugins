@@ -9,7 +9,7 @@
  */
 
 (()=>{
-    "use stirct";
+    "use strict";
 
     class Game_MapEx extends Game_Map {
         /**

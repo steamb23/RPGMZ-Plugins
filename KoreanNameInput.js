@@ -37,7 +37,7 @@
  */
 
 (() => {
-    "use stirct";
+    "use strict";
 
     const pluginName = "KoreanNameInput";
 
