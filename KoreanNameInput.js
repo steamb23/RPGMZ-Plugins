@@ -1,7 +1,11 @@
+// MIT License
+// 
+// Copyright (c) 2024 SteamB23
+
 /*:
  * @target MZ
  * @plugindesc 한글 조합형 한글 입력기
- * @author 맛난호빵
+ * @author SteamB23
  * 
  * @help KoreanNameInput.js
  * 

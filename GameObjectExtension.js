@@ -1,7 +1,11 @@
+// MIT License
+// 
+// Copyright (c) 2024 SteamB23
+
 /*:
  * @target MZ
  * @plugindesc 게임 오브젝트의 기능을 확장합니다.
- * @author 맛난호빵
+ * @author SteamB23
  */
 
 (()=>{
