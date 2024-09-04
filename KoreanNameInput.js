@@ -2,18 +2,25 @@
  * @target MZ
  * @plugindesc Window_NameInput의 기능을 확장하여 한국어 입력을 지원합니다.
  * @author 맛난호빵
+ * 
+// * @param shortVowelInput
+// * @text 단모음 입력
+// * @type boolean
+// * @desc 단모음 입력 지원 여부를 설정합니다.
+// * @default false
+// * @on 단모음 입력
+// * @off 일반 입력
  */
 
 (()=>{
     'use strict';
+    const params = PluginManager.parameters('KoreanNameInput');
+    const shortVowelInput = Boolean(params['shortVowelInput']);
+    
     /**
      * 한글 입력 조합 클래스
      */
     class HangulInputProcessor {
-        constructor(){
-            this.reset();
-        }
-
         static HANGUL_CHOSEONG_CODE = {
             'ㄱ': 0, 'ㄲ': 1, 'ㄴ': 2, 'ㄷ': 3, 'ㄸ': 4, 'ㄹ': 5, 'ㅁ': 6, 'ㅂ': 7, 'ㅃ': 8, 
             'ㅅ': 9, 'ㅆ': 10, 'ㅇ': 11, 'ㅈ': 12, 'ㅉ': 13, 'ㅊ': 14, 'ㅋ': 15, 'ㅌ': 16, 
@@ -32,173 +39,242 @@
         };
         // 겹자음 패턴
         static HANGUL_DOUBLE_CHOSEONG_PATTERN = {
-            'ㄱㄱ':'ㄲ',
-            'ㄷㄷ':'ㄸ',
-            'ㅂㅂ':'ㅃ',
-            'ㅅㅅ':'ㅆ',
-            'ㅈㅈ':'ㅉ'
+            'ㄱㄱ': 'ㄲ',
+            'ㄷㄷ': 'ㄸ',
+            'ㅂㅂ': 'ㅃ',
+            'ㅅㅅ': 'ㅆ',
+            'ㅈㅈ': 'ㅉ'
         };
+
+        // 겹모음 패턴
+        static HANGUL_DOUBLE_JUNGSEONG_PATTERN = {
+            'ㅏㅣ': 'ㅐ',
+            'ㅑㅣ': 'ㅒ',
+            'ㅓㅣ': 'ㅔ',
+            'ㅕㅣ': 'ㅖ',
+            'ㅗㅏ': 'ㅘ',
+            'ㅗㅐ': 'ㅙ',
+            'ㅗㅣ': 'ㅚ',
+            'ㅜㅣ': 'ㅟ',
+            'ㅡㅣ': 'ㅢ'
+        }
+
+        // 단모음 패턴
+        static HANGUL_SHORT_VOWEL_PATTERN = {
+            'ㅏㅏ': 'ㅑ',
+            'ㅐㅐ': 'ㅒ',
+            'ㅓㅓ': 'ㅕ',
+            'ㅔㅔ': 'ㅖ',
+            'ㅗㅗ': 'ㅛ',
+            'ㅜㅜ': 'ㅠ'
+        }
 
         // 겹받침 패턴
         static HANGUL_DOUBLE_JONGSEONG_PATTERN = {
-            'ㄱㅅ':'ㄳ',
-            'ㄴㅈ':'ㄵ',
-            'ㄴㅎ':'ㄶ',
-            'ㄹㄱ':'ㄺ',
-            'ㄹㅁ':'ㄻ',
-            'ㄹㅂ':'ㄼ',
-            'ㄹㅅ':'ㄽ',
-            'ㄹㅌ':'ㄾ',
-            'ㄹㅍ':'ㄿ',
-            'ㄹㅎ':'ㅀ',
-            'ㅂㅅ':'ㅄ'
+            'ㄱㅅ': 'ㄳ',
+            'ㄴㅈ': 'ㄵ',
+            'ㄴㅎ': 'ㄶ',
+            'ㄹㄱ': 'ㄺ',
+            'ㄹㅁ': 'ㄻ',
+            'ㄹㅂ': 'ㄼ',
+            'ㄹㅅ': 'ㄽ',
+            'ㄹㅌ': 'ㄾ',
+            'ㄹㅍ': 'ㄿ',
+            'ㄹㅎ': 'ㅀ',
+            'ㅂㅅ': 'ㅄ'
         }
 
-        getDoubleChoseong(characters) {
-            return HangulInputProcessor.HANGUL_DOUBLE_CHOSEONG_PATTERN[characters] ?? HangulInputProcessor.HANGUL_DOUBLE_JONGSEONG_PATTERN[characters];
-        }
-
-        getDoubleJongseong(characters) {
-            return HangulInputProcessor.HANGUL_DOUBLE_JONGSEONG_PATTERN[characters];
-        }
-
-        getChoseongCode(character) {
+        static getChoseongCode(character) {
             return HangulInputProcessor.HANGUL_CHOSEONG_CODE[character] ?? -1;
         }
 
-        getJungseongCode(character) {
+        static getJungseongCode(character) {
             return HangulInputProcessor.HANGUL_JUNGSEONG_CODE[character] ?? -1;
         }
 
-        getJongseongCode(character) {
+        static getJongseongCode(character) {
             return HangulInputProcessor.HANGUL_JONGSEONG_CODE[character] ?? 0;
         }
 
-        inputBack(){
-            this._editWindow.back();
+        static getDoubleChoseong(characters) {
+            return HangulInputProcessor.HANGUL_DOUBLE_CHOSEONG_PATTERN[characters] ?? HangulInputProcessor.HANGUL_DOUBLE_JONGSEONG_PATTERN[characters];
+        }
+        
+        static getDoubleJungseong(characters) {
+            return HangulInputProcessor.HANGUL_DOUBLE_JUNGSEONG_PATTERN[characters];
         }
 
-        inputAdd(character) {
-            this._editWindow.add(character);
+        static getDoubleJongseong(characters) {
+            return HangulInputProcessor.HANGUL_DOUBLE_CHOSEONG_PATTERN[characters] ?? HangulInputProcessor.HANGUL_DOUBLE_JONGSEONG_PATTERN[characters];
         }
+
+        static get isShortVowelInput() {
+            return shortVowelInput;
+        }
+        
+        buffer = [];
+        // 입력 버퍼 크기
+        static MAX_BUFFER_SIZE = 6;
 
         setEditWindow(editWindow) {
             this._editWindow = editWindow;
         }
 
-        getHangul() {
-            return this._hangul;
-        }
-
         addCharacter(character) {
-            // 초성이 아직 저장되어 있지 않은 경우
-            if (this._choseongCode == -1) {
-                this._choseongCode = this.getChoseongCode(character);
-                if (this._choseongCode != -1)
-                    this._choseongChar = character;
+            this.buffer.push(character);
 
-                this._hangul = character;
-                return this.hangul;
-            }
-
-            // 중성이 아직 저장되어 있지 않은 경우
-            if (this._jungseongCode == -1) {
-            
-                // // 초성이 저장되었지만 초성이 재 입력된 경우 겹자음이면 입력처리
-                // const doubleChoseong = this.getDoubleChoseong(this._choseongChar + character)
-                // if (doubleChoseong != null) {
-                //     this._choseongCode = this.getChoseongCode(doubleChoseong);
-                //     if (this._choseongCode != -1)
-                //         this._choseongChar = doubleChoseong;
-    
-                //     this._hangul = doubleChoseong;
-                //     this.inputBack();
-                //     return this.hangul;
-                // }
-                
-                if ((this._jungseongCode = this.getJungseongCode(character)) != -1){
-                    this._hangul = this.combineCode();
-                    this.inputBack();
-                    return this._hangul;
-                } else {
-                    this.reset();
-                    return this.addCharacter(character);
-                }
-            }
-
-            // 종성이 아직 저장되어 있지 않은 경우
-            if (this._jongseongCode == 0) {
-                if ((this._jongseongCode = this.getJongseongCode(character)) != 0){
-                    this._jongseongChar = character;
-                    this._hangul = this.combineCode();
-                    this.inputBack()
-                    return this._hangul;
-                } else {
-                    this.reset();
-                    return this.addCharacter(character);
-                }
-            }
-            
-            // // 모든 글자가 저장되었지만 종성이 입력된 것으로 판단될 경우 겹받침 처리
-            // const doubleJongseong = this.getDoubleJongseong(this._jongseongChar + character);
-            // if (doubleJongseong && (this._jongseongCode = this.getJongseongCode(doubleJongseong)) != 0) {
-            //     this._jongseongChar = doubleJongseong;
-            //     this._hangul = this.combineCode();
-            //     this.inputBack()
-            //     return this._hangul;
-            // }
-            // 모든 글자가 저장되었고 중성이 입력되었을 때 도깨비불 처리
-            const dokkaebiJungseongCode = this.getJungseongCode(character);
-            const dokkaebiChoseongCode = this.getChoseongCode(this._jongseongChar);
-
-            if (dokkaebiJungseongCode !== -1 && dokkaebiChoseongCode !== -1) {
-                this.inputBack();
-                this.inputAdd(HangulInputProcessor.combine(this._choseongCode, this._jungseongCode, 0));
-
-                this._choseongCode = dokkaebiChoseongCode;
-                this._jungseongCode = dokkaebiJungseongCode;
-                this._jongseongCode = 0;
-                this._hangul = this.combineCode();
-                return this._hangul;
-            }
-
-            // 모든 문자가 저장되어있거나 한글이 아닌 글자가 들어온 경우 리셋하고 새로 작성
-            this.reset();
-            return this.addCharacter(character);
-        }
-
-        combineCode() {
-            return HangulInputProcessor.combine(this._choseongCode, this._jungseongCode, this._jongseongCode);
-        }
-
-        static combine(choseongCode, jungseongCode, jongseongCode) {
-            return String.fromCharCode(((choseongCode * 21) + jungseongCode) * 28 + jongseongCode + 0xac00);
-        }
-
-        reset() {
-            this._hangul = '';
-            this._choseongChar = '';
-            this._jongseongChar = ''; // 
-            this._choseongCode = -1;
-            this._jungseongCode = -1;
-            this._jongseongCode = 0;
+            this.process(this.buffer);
         }
 
         cancel() {
-            if (this._jongseongCode != 0){
-                this._jongseongCode = 0;
-                this._hangul = this.combineCode();
-                this.inputAdd(this._hangul);
-            } else if(this._jungseongCode != -1) {
-                this._jungseongCode = -1;
-                // this._hangul = this.combineCode();
-                this._hangul = this._choseongChar;
-                this.inputAdd(this._hangul);
-            } else if (this._choseongCode != -1) {
-                this._choseongCode = -1;
-                this._choseongChar = '';
-                this._hangul = '';
+            this.buffer.pop();
+
+            if (this.buffer.length > 0){
+                this.process(this.buffer, false);
+                this._editWindow.add(this.hangul);
             }
+        }
+
+        getHangul() {
+            return this.hangul;
+        }
+
+        reset() {
+            this.hangul = null;
+            this.buffer.length = 0;
+        }
+
+        bufferReset() {
+            this.buffer.length = 0;
+        }
+
+        /** 
+         * 버퍼를 합성합니다.
+         * 합성이 불가능할 경우 버퍼를 비웁니다.
+         *  */
+        process(buffer, allowBack = true) {
+            const CHO = 0;
+            const JUNG = 1;
+            const JONG = 2;
+            // 초성, 중성, 종성 배열
+            let characters = ['', '', ''];
+            let codes = [-1, -1, 0];
+
+            let back = () => {
+                if (allowBack) this._editWindow.back();
+            }
+
+            let reset = () => {
+                this.reset();
+                characters = ['', '', ''];
+                codes = [-1, -1, 0];
+            }
+
+            let setCharacter = (index, character, code) => {
+                characters[index] = character;
+                codes[index] = code ?? [
+                    HangulInputProcessor.getChoseongCode,
+                    HangulInputProcessor.getJungseongCode,
+                    HangulInputProcessor.getJongseongCode][index](character);
+            };
+
+            let automata = (character) => {
+                let temp;
+                if (codes[CHO] == -1) {
+                    setCharacter(CHO, character);
+                    return true;
+                }
+                if (codes[JUNG] == -1) {
+                    // 겹자음 처리
+                    if (HangulInputProcessor.getChoseongCode(character) != -1 &&
+                        (temp = HangulInputProcessor.getDoubleChoseong(characters[CHO]+character)) != null) {
+                        setCharacter(CHO, temp);
+                        // 겹받침용 문자, 즉 -1 가 나왔을 경우 리셋
+                        if (codes[CHO] == -1)
+                            this.reset();
+                        back();
+                        return true;
+                    }
+                    // 모음이 아닌 경우 리셋처리
+                    if (HangulInputProcessor.getJungseongCode(character) == -1)
+                    {
+                        reset();
+                        automata(character);
+                        return false;
+                    }
+                    setCharacter(JUNG, character);
+                    back();
+                    return true;
+                }
+                if (codes[JONG] == 0) {
+                    // 겹모음 처리
+                    if (HangulInputProcessor.getJungseongCode(character) != -1 &&
+                        (temp = HangulInputProcessor.getDoubleJungseong(characters[JUNG]+character)) != null) {
+                        setCharacter(JUNG, temp);
+                        back();
+                        return true;
+                    }
+                    // // 단모음 처리
+                    // if (this.isShortVowelInput &&
+                    //     HangulInputProcessor.getJungseongCode(character) != -1 &&
+                    //     (temp = HangulInputProcessor.getDoubleJungseong(characters[JUNG]+character) != null)) {
+                    //     setCharacter(JUNG, temp);
+                    //     break;
+                    // }
+                    // 받침이 아닌 경우 리셋처리
+                    if (HangulInputProcessor.getJongseongCode(character) == -1)
+                        {
+                            reset();
+                            automata(character);
+                            return false;
+                        }
+                    setCharacter(JONG, character);
+                    back();
+                    return true;
+                }
+                
+                // 겹받침 처리
+                if (HangulInputProcessor.getJongseongCode(character) != 0 &&
+                (temp = HangulInputProcessor.getDoubleJongseong(characters[JONG]+character)) != null) {
+                    setCharacter(JONG, temp);
+                    back();
+                    return true;
+                }
+                // 도깨비불 처리
+                if (HangulInputProcessor.getJungseongCode(character) != -1) {
+                    back();
+                    this._editWindow.add(HangulInputProcessor.combine(codes[0], codes[1], 0));
+                    reset();
+                    setCharacter(CHO, character);
+                    return true;
+                }
+
+                this._editWindow.add(HangulInputProcessor.combine(codes[0], codes[1], codes[2]));
+                reset();
+                this.buffer.push(character);
+                automata(character);
+                return false;
+            }
+
+            for (const character of buffer) {
+                if (automata(character)) continue;
+                else break;
+            }
+
+            let result = HangulInputProcessor.combine(codes[0], codes[1], codes[2]);
+            if (result) {
+                this.hangul = result;
+            } else {
+                this.hangul =  characters.join('');
+            }
+        }
+
+        static combine(choseongCode, jungseongCode, jongseongCode) {
+            // 오류 처리
+            if (choseongCode == -1 || jungseongCode == -1) {
+                return null;
+            }
+            return String.fromCharCode(((choseongCode * 21) + jungseongCode) * 28 + jongseongCode + 0xac00);
         }
     }
 
